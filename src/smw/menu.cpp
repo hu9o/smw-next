@@ -1597,7 +1597,7 @@ void Menu::CreateMenu()
 	if (!useNewMenu) {
 		miTeamSelect = new MI_TeamSelect(&rm->spr_player_select_background, 112, 96);
 	} else {
-		miTeamSelect = new MI_TeamSelect2(&rm->spr_player_select_background, 112, 96);
+		miTeamSelect = new MI_TeamSelect2(&rm->spr_player_select2_background, 0, 0);
 	}
     miTeamSelect->SetAutoModify(true);
 

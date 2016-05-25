@@ -102,8 +102,8 @@ class MI_InputControlContainer : public UI_Control
 class MI_TeamSelectBase : public UI_Control
 {
 	public:
-		MI_TeamSelectBase(short x, short y);
-		virtual ~MI_TeamSelectBase() {};
+		MI_TeamSelectBase(gfxSprite * spr_background, short x, short y);
+		virtual ~MI_TeamSelectBase();
 
 		void Update();
 		virtual void Draw() = 0;
@@ -119,6 +119,9 @@ class MI_TeamSelectBase : public UI_Control
 	
 	protected:
 		void FindNewTeam(short iPlayerID, short iDirection);
+
+		MI_Image * miImage;
+		gfxSprite * spr;
 
 		short iTeamIDs[4][3];
 		short iTeamCounts[4];
@@ -143,10 +146,6 @@ class MI_TeamSelect : public MI_TeamSelectBase
 		void Reset();
 
 	private:
-
-		MI_Image * miImage;
-		gfxSprite * spr;
-
 		short iFastScroll[4];
 		short iFastScrollTimer[4];
 
@@ -165,7 +164,7 @@ class MI_TeamSelect2 : public MI_TeamSelectBase
 
 	private:
 		static const short grid_w = 12;
-		static const short grid_h = 8;
+		static const short grid_h = 4;
 		gfxSprite *** skinGrid;
 
 	friend class Menu;

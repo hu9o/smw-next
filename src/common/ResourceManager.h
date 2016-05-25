@@ -60,6 +60,7 @@ public:
 	gfxSprite		spr_tournament_background;
 	gfxSprite		spr_tournament_powerup_splash;
 	gfxSprite		spr_player_select_background;
+	gfxSprite		spr_player_select2_background;
 	gfxSprite		spr_player_select_ready;
 	//gfxSprite		spr_ipfield;
 	gfxSprite		spr_selectfield;

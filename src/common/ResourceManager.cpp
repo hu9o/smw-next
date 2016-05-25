@@ -270,6 +270,7 @@ bool CResourceManager::LoadMenuGraphics()
     gfx_loadimage(&spr_tournament_background, convertPath("gfx/packs/menu/tournament_background.png", graphicspack), false);
     gfx_loadimage(&spr_tournament_powerup_splash, convertPath("gfx/packs/menu/tournament_powerup_splash.png", graphicspack), false);
     gfx_loadimage(&spr_player_select_background, convertPath("gfx/packs/menu/player_select_background.png", graphicspack), false);
+    gfx_loadimage(&spr_player_select2_background, convertPath("gfx/packs/menu/maquette-menu-mario.png", graphicspack), false);
     gfx_loadimage(&spr_player_select_ready, convertPath("gfx/packs/menu/player_select_ready.png", graphicspack), false);
     //gfx_loadimage(&spr_ipfield, convertPath("gfx/packs/menu/menu_ipfield.png", graphicspack), false);
     gfx_loadimage(&spr_selectfield, convertPath("gfx/packs/menu/menu_selectfield.png", graphicspack), false);

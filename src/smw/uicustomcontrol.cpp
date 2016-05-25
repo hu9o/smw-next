@@ -517,9 +517,11 @@ void MI_InputControlContainer::UpdateDeviceKeys(short lDevice)
  * MI_TeamSelectBase Class
  **************************************/
 
-MI_TeamSelectBase::MI_TeamSelectBase(short x, short y) :
+MI_TeamSelectBase::MI_TeamSelectBase(gfxSprite * spr_background, short x, short y) :
 	UI_Control(x, y)
 {
+    spr = spr_background;
+
     for(short iTeam = 0; iTeam < 4; iTeam++) {
         iTeamCounts[iTeam] = game_values.teamcounts[iTeam];
 
@@ -532,6 +534,9 @@ MI_TeamSelectBase::MI_TeamSelectBase(short x, short y) :
     iAnimationTimer = 0;
     iAnimationFrame = 0;
     iRandomAnimationFrame = 0;
+}
+MI_TeamSelectBase::~MI_TeamSelectBase()
+{
 }
 
 void MI_TeamSelectBase::Update()
@@ -752,9 +757,8 @@ void MI_TeamSelectBase::FindNewTeam(short iPlayerID, short iDirection)
  **************************************/
 
 MI_TeamSelect::MI_TeamSelect(gfxSprite * spr_background_ref, short x, short y) :
-    MI_TeamSelectBase(x, y)
+    MI_TeamSelectBase(spr_background_ref, x, y)
 {
-    spr = spr_background_ref;
     miImage = new MI_Image(spr, ix, iy, 0, 0, 416, 256, 1, 1, 0);
 }
 
@@ -944,12 +948,15 @@ void MI_TeamSelect::Reset()
 	}
 }
 
+
 /**************************************
  * MI_TeamSelect2 Class
  **************************************/
 MI_TeamSelect2::MI_TeamSelect2(gfxSprite * spr_background, short x, short y) :
-	MI_TeamSelectBase(x, y)
+	MI_TeamSelectBase(spr_background, x, y)
 {
+    miImage = new MI_Image(spr, ix, iy, 0, 0, 640, 480, 1, 1, 0);
+
 	// Allocate skin grid sprites
 	skinGrid = new gfxSprite ** [skinlist->GetCount()];
 
@@ -983,10 +990,26 @@ MI_TeamSelect2::~MI_TeamSelect2()
 		delete skinGrid[i];
 	}
 	delete skinGrid;
+
+    delete miImage;
 }
 
 void MI_TeamSelect2::Draw()
 {
+    if(!fShow)
+        return;
+
+	miImage->Draw();
+
+	const short ow = grid_w * 48 - 16;
+	const short oh = grid_h * 48 - 16;
+	const short ox = (640 - ow) / 2;
+	const short oy = (480 - oh) / 2 + 62;
+
+	for (int i = 0; i < skinlist->GetCount() && i < grid_h*grid_w; i++)
+	{
+		skinGrid[i][0]->draw(ox + (i%grid_w) * 48, oy + (i/grid_w) * 48, 0, 0, 32, 32);
+	}
 }
 
 MenuCodeEnum MI_TeamSelect2::SendInput(CPlayerInput * playerInput)
