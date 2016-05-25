@@ -99,7 +99,31 @@ class MI_InputControlContainer : public UI_Control
 		MI_Button * miBackButton;
 };
 
-class MI_TeamSelect : public UI_Control
+class MI_TeamSelectBase : public UI_Control
+{
+	public:
+		MI_TeamSelectBase(short x, short y) : UI_Control(x, y) {}
+		virtual ~MI_TeamSelectBase() {};
+
+		virtual void Update() = 0;
+		virtual void Draw() = 0;
+
+		virtual MenuCodeEnum SendInput(CPlayerInput * playerInput) = 0;
+		virtual MenuCodeEnum Modify(bool modify) = 0;
+
+		virtual void Reset() = 0;
+		virtual short OrganizeTeams() = 0;
+		virtual short GetTeam(short iPlayerID) = 0;
+
+		friend class Menu;
+	
+	protected:
+		short iTeamIDs[4][3];
+		short iTeamCounts[4];
+		//short iNumTeams;
+};
+
+class MI_TeamSelect : public MI_TeamSelectBase
 {
 	public:
 
@@ -122,10 +146,6 @@ class MI_TeamSelect : public UI_Control
 
 		MI_Image * miImage;
 		gfxSprite * spr;
-
-		short iTeamIDs[4][3];
-		short iTeamCounts[4];
-		short iNumTeams;
 		
 		short iAnimationTimer;
 		short iAnimationFrame;
@@ -136,6 +156,31 @@ class MI_TeamSelect : public UI_Control
 
 		short iFastScroll[4];
 		short iFastScrollTimer[4];
+
+	friend class Menu;
+};
+
+class MI_TeamSelect2 : public MI_TeamSelectBase
+{
+	public:
+		MI_TeamSelect2(gfxSprite * spr_background, short x, short y);
+		virtual ~MI_TeamSelect2();
+
+		void Update();
+		void Draw();
+
+		MenuCodeEnum SendInput(CPlayerInput * playerInput);
+		MenuCodeEnum Modify(bool modify);
+
+		void Reset();
+		short OrganizeTeams();
+		short GetTeam(short iPlayerID);
+
+	private:
+		MI_Image * backgroundImage;
+		static const short grid_w = 12;
+		static const short grid_h = 8;
+		gfxSprite *** skinGrid;
 
 	friend class Menu;
 };

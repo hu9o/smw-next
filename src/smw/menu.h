@@ -383,7 +383,7 @@ class Menu
 		
 		//Team Select
 		UI_Menu mTeamSelectMenu;
-		MI_TeamSelect * miTeamSelect;
+		MI_TeamSelectBase * miTeamSelect;
 		
 		MI_Image * miTeamSelectLeftHeaderBar;
 		MI_Image * miTeamSelectRightHeaderBar;

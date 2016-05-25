@@ -518,7 +518,7 @@ void MI_InputControlContainer::UpdateDeviceKeys(short lDevice)
  **************************************/
 
 MI_TeamSelect::MI_TeamSelect(gfxSprite * spr_background_ref, short x, short y) :
-    UI_Control(x, y)
+    MI_TeamSelectBase(x, y)
 {
     spr = spr_background_ref;
     miImage = new MI_Image(spr, ix, iy, 0, 0, 416, 256, 1, 1, 0);
@@ -598,6 +598,9 @@ void MI_TeamSelect::Draw()
         rm->menu_plain_field.draw(ix + 208, iy + smw->ScreenHeight * 0.47f, 412, 160, 100, 32);
         rm->menu_font_large.drawCentered(smw->ScreenWidth/2, iy + smw->ScreenHeight * 0.48f, "Continue");
     }
+
+	////// Overlay
+	
 }
 
 MenuCodeEnum MI_TeamSelect::SendInput(CPlayerInput * playerInput)
@@ -899,7 +902,7 @@ void MI_TeamSelect::Reset()
 
 short MI_TeamSelect::OrganizeTeams()
 {
-    iNumTeams = 0;
+    short iNumTeams = 0;
     for(short iTeam = 0; iTeam < 4; iTeam++) {
         game_values.teamcounts[iTeam] = 0;
 
@@ -925,6 +928,48 @@ short MI_TeamSelect::GetTeam(short iPlayerID)
         }
     }
 
+    return -1;
+}
+
+/**************************************
+ * MI_TeamSelect2 Class
+ **************************************/
+MI_TeamSelect2::MI_TeamSelect2(gfxSprite * spr_background, short x, short y) :
+	MI_TeamSelectBase(x, y)
+{
+}
+MI_TeamSelect2::~MI_TeamSelect2()
+{
+}
+
+void MI_TeamSelect2::Update()
+{
+
+}
+void MI_TeamSelect2::Draw()
+{
+}
+
+MenuCodeEnum MI_TeamSelect2::SendInput(CPlayerInput * playerInput)
+{
+    return MENU_CODE_NONE;
+}
+MenuCodeEnum MI_TeamSelect2::Modify(bool modify)
+{
+    fModifying = modify;
+    return MENU_CODE_MODIFY_ACCEPTED;
+}
+
+void MI_TeamSelect2::Reset()
+{
+
+}
+short MI_TeamSelect2::OrganizeTeams()
+{
+    return -1;
+}
+short MI_TeamSelect2::GetTeam(short iPlayerID)
+{
     return -1;
 }
 
