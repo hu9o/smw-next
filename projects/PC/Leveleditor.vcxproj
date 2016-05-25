@@ -24,11 +24,16 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -48,6 +53,10 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>..\..\external\win32-include\zlib-1.2.3\include;..\..\external\win32-include\SDL-1.2.15\include;..\..\external\win32-include\SDL_mixer-1.2.12\include;..\..\external\win32-include\SDL_image-1.2.12\include;..\..\external\win32-include\libpng-1.2.37\include\libpng12;$(IncludePath)</IncludePath>
+    <LibraryPath>..\..\external\win32-include\SDL_mixer-1.2.12\lib\x86;..\..\external\win32-include\zlib-1.2.3\lib;..\..\external\win32-include\SDL-1.2.15\lib\x86;..\..\external\win32-include\SDL_image-1.2.12\lib\x86;..\..\external\win32-include\libpng-1.2.37\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -119,66 +128,66 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\dirlist.cpp" />
-    <ClCompile Include="..\..\src\eyecandy.cpp" />
-    <ClCompile Include="..\..\src\FileIO.cpp" />
-    <ClCompile Include="..\..\src\FileList.cpp" />
-    <ClCompile Include="..\..\src\global.cpp" />
-    <ClCompile Include="..\..\src\input.cpp" />
-    <ClCompile Include="..\..\src\leveleditor.cpp">
+    <ClCompile Include="..\..\src\common\dirlist.cpp" />
+    <ClCompile Include="..\..\src\common\eyecandy.cpp" />
+    <ClCompile Include="..\..\src\common\FileIO.cpp" />
+    <ClCompile Include="..\..\src\common\FileList.cpp" />
+    <ClCompile Include="..\..\src\common\global.cpp" />
+    <ClCompile Include="..\..\src\common\input.cpp" />
+    <ClCompile Include="..\..\src\leveleditor\leveleditor.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="..\..\src\map.cpp">
+    <ClCompile Include="..\..\src\common\map.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="..\..\src\MapList.cpp" />
-    <ClCompile Include="..\..\src\movingplatform.cpp" />
-    <ClCompile Include="..\..\src\path.cpp" />
-    <ClCompile Include="..\..\src\savepng.cpp" />
-    <ClCompile Include="..\..\src\TilesetManager.cpp" />
-    <ClCompile Include="..\..\src\gfx.cpp">
+    <ClCompile Include="..\..\src\common\MapList.cpp" />
+    <ClCompile Include="..\..\src\common\movingplatform.cpp" />
+    <ClCompile Include="..\..\src\common\path.cpp" />
+    <ClCompile Include="..\..\src\common\savepng.cpp" />
+    <ClCompile Include="..\..\src\common\TilesetManager.cpp" />
+    <ClCompile Include="..\..\src\common\gfx.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="..\..\src\SFont.c">
+    <ClCompile Include="..\..\src\common\SFont.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="..\..\src\sfx.cpp" />
+    <ClCompile Include="..\..\src\common\sfx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\dirlist.h" />
-    <ClInclude Include="..\..\src\eyecandy.h" />
-    <ClInclude Include="..\..\src\FileIO.h" />
-    <ClInclude Include="..\..\src\FileList.h" />
-    <ClInclude Include="..\..\src\global.h" />
-    <ClInclude Include="..\..\src\input.h" />
-    <ClInclude Include="..\..\src\map.h" />
-    <ClInclude Include="..\..\src\MapList.h" />
-    <ClInclude Include="..\..\src\movingplatform.h" />
-    <ClInclude Include="..\..\src\path.h" />
-    <ClInclude Include="..\..\src\savepng.h" />
-    <ClInclude Include="..\..\src\TilesetManager.h" />
-    <ClInclude Include="..\..\src\gfx.h" />
-    <ClInclude Include="..\..\src\SFont.h" />
-    <ClInclude Include="..\..\src\sfx.h" />
+    <ClInclude Include="..\..\src\common\dirlist.h" />
+    <ClInclude Include="..\..\src\common\eyecandy.h" />
+    <ClInclude Include="..\..\src\common\FileIO.h" />
+    <ClInclude Include="..\..\src\common\FileList.h" />
+    <ClInclude Include="..\..\src\common\global.h" />
+    <ClInclude Include="..\..\src\common\input.h" />
+    <ClInclude Include="..\..\src\common\map.h" />
+    <ClInclude Include="..\..\src\common\MapList.h" />
+    <ClInclude Include="..\..\src\common\movingplatform.h" />
+    <ClInclude Include="..\..\src\common\path.h" />
+    <ClInclude Include="..\..\src\common\savepng.h" />
+    <ClInclude Include="..\..\src\common\TilesetManager.h" />
+    <ClInclude Include="..\..\src\common\gfx.h" />
+    <ClInclude Include="..\..\src\common\SFont.h" />
+    <ClInclude Include="..\..\src\common\sfx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\..\src\icons\leveleditor_icon.rc">
+    <ResourceCompile Include="..\..\src\resources\leveleditor_icon.rc">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">\_projects\_old projects\SuperMarioWar\src\icons;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>

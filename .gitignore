@@ -1,0 +1,11 @@
+# Resources folder - needed in order to run the game
+smw-1.8-beta2-bin/
+
+# Generated objects and executable
+projects/PC/Debug/
+
+# Specific to Visual Studio
+*.suo
+*.vcxproj.user
+*.sdf
+*.opensdf
