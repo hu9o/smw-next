@@ -102,25 +102,33 @@ class MI_InputControlContainer : public UI_Control
 class MI_TeamSelectBase : public UI_Control
 {
 	public:
-		MI_TeamSelectBase(short x, short y) : UI_Control(x, y) {}
+		MI_TeamSelectBase(short x, short y);
 		virtual ~MI_TeamSelectBase() {};
 
-		virtual void Update() = 0;
+		void Update();
 		virtual void Draw() = 0;
 
 		virtual MenuCodeEnum SendInput(CPlayerInput * playerInput) = 0;
-		virtual MenuCodeEnum Modify(bool modify) = 0;
+		MenuCodeEnum Modify(bool modify);
 
-		virtual void Reset() = 0;
-		virtual short OrganizeTeams() = 0;
-		virtual short GetTeam(short iPlayerID) = 0;
+		virtual void Reset();
+		short OrganizeTeams();
+		short GetTeam(short iPlayerID);
 
 		friend class Menu;
 	
 	protected:
+		void FindNewTeam(short iPlayerID, short iDirection);
+
 		short iTeamIDs[4][3];
 		short iTeamCounts[4];
-		//short iNumTeams;
+		
+		short iAnimationTimer;
+		short iAnimationFrame;
+		short iRandomAnimationFrame;
+
+		bool fReady[4];
+		bool fAllReady;
 };
 
 class MI_TeamSelect : public MI_TeamSelectBase
@@ -130,29 +138,14 @@ class MI_TeamSelect : public MI_TeamSelectBase
 		MI_TeamSelect(gfxSprite * spr_background, short x, short y);
 		virtual ~MI_TeamSelect();
 
-		void Update();
 		void Draw();
-
 		MenuCodeEnum SendInput(CPlayerInput * playerInput);
-		MenuCodeEnum Modify(bool modify);
-
 		void Reset();
-		short OrganizeTeams();
-		short GetTeam(short iPlayerID);
 
 	private:
 
-		void FindNewTeam(short iPlayerID, short iDirection);
-
 		MI_Image * miImage;
 		gfxSprite * spr;
-		
-		short iAnimationTimer;
-		short iAnimationFrame;
-		short iRandomAnimationFrame;
-
-		bool fReady[4];
-		bool fAllReady;
 
 		short iFastScroll[4];
 		short iFastScrollTimer[4];
@@ -166,18 +159,11 @@ class MI_TeamSelect2 : public MI_TeamSelectBase
 		MI_TeamSelect2(gfxSprite * spr_background, short x, short y);
 		virtual ~MI_TeamSelect2();
 
-		void Update();
 		void Draw();
-
 		MenuCodeEnum SendInput(CPlayerInput * playerInput);
-		MenuCodeEnum Modify(bool modify);
-
 		void Reset();
-		short OrganizeTeams();
-		short GetTeam(short iPlayerID);
 
 	private:
-		MI_Image * backgroundImage;
 		static const short grid_w = 12;
 		static const short grid_h = 8;
 		gfxSprite *** skinGrid;

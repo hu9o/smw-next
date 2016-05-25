@@ -514,15 +514,12 @@ void MI_InputControlContainer::UpdateDeviceKeys(short lDevice)
 }
 
 /**************************************
- * MI_TeamSelect Class
+ * MI_TeamSelectBase Class
  **************************************/
 
-MI_TeamSelect::MI_TeamSelect(gfxSprite * spr_background_ref, short x, short y) :
-    MI_TeamSelectBase(x, y)
+MI_TeamSelectBase::MI_TeamSelectBase(short x, short y) :
+	UI_Control(x, y)
 {
-    spr = spr_background_ref;
-    miImage = new MI_Image(spr, ix, iy, 0, 0, 416, 256, 1, 1, 0);
-
     for(short iTeam = 0; iTeam < 4; iTeam++) {
         iTeamCounts[iTeam] = game_values.teamcounts[iTeam];
 
@@ -537,12 +534,7 @@ MI_TeamSelect::MI_TeamSelect(gfxSprite * spr_background_ref, short x, short y) :
     iRandomAnimationFrame = 0;
 }
 
-MI_TeamSelect::~MI_TeamSelect()
-{
-    delete miImage;
-}
-
-void MI_TeamSelect::Update()
+void MI_TeamSelectBase::Update()
 {
     if(++iAnimationTimer > 7) {
         iAnimationTimer = 0;
@@ -555,6 +547,220 @@ void MI_TeamSelect::Update()
         if(iRandomAnimationFrame >= 128)
             iRandomAnimationFrame = 0;
     }
+}
+
+MenuCodeEnum MI_TeamSelectBase::Modify(bool modify)
+{
+    fModifying = modify;
+    return MENU_CODE_MODIFY_ACCEPTED;
+}
+
+void MI_TeamSelectBase::Reset()
+{
+    for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
+        short iTeamID;
+        short iSlotID;
+        bool fFound = false;
+        for(iTeamID = 0; iTeamID < 4; iTeamID++) {
+            for(iSlotID = 0; iSlotID < iTeamCounts[iTeamID]; iSlotID++) {
+                if(iTeamIDs[iTeamID][iSlotID] == iPlayer) {
+                    fFound = true;
+                    break;
+                }
+            }
+
+            if(fFound)
+                break;
+        }
+
+        if(fFound) {
+            //Need to remove the player
+            if(game_values.playercontrol[iPlayer] == 0) {
+                iTeamCounts[iTeamID]--;
+
+                if(iTeamCounts[iTeamID] > iSlotID) {
+                    for(short iSlot = iSlotID; iSlot < iTeamCounts[iTeamID]; iSlot++) {
+                        iTeamIDs[iTeamID][iSlot] = iTeamIDs[iTeamID][iSlot + 1];
+                    }
+                }
+            }
+        } else {
+            //A new player was added so find a spot for him
+            if(game_values.playercontrol[iPlayer] > 0) {
+                short iLookForNewTeam = iPlayer;
+
+                while(iTeamCounts[iLookForNewTeam] >= 3) {
+                    if(++iLookForNewTeam >= 4)
+                        iLookForNewTeam = 0;
+                }
+
+                iTeamIDs[iLookForNewTeam][iTeamCounts[iLookForNewTeam]] = iPlayer;
+                iTeamCounts[iLookForNewTeam]++;
+
+                if(game_values.teamcolors)
+                    game_values.colorids[iPlayer] = iLookForNewTeam;
+            }
+        }
+    }
+
+    //Check to see if there is only one team and if so, split them up
+
+    short iCountTeams = 0;
+    short iLastTeam = 0;
+    for(short iTeamID = 0; iTeamID < 4; iTeamID++) {
+        if(iTeamCounts[iTeamID] > 0) {
+            iCountTeams++;
+            iLastTeam = iTeamID;
+        }
+    }
+
+    if(iCountTeams == 1) {
+        short iLookForNewTeam = iLastTeam;
+        if(++iLookForNewTeam >= 4)
+            iLookForNewTeam = 0;
+
+        iTeamCounts[iLastTeam]--;
+        short iPlayer = iTeamIDs[iLastTeam][iTeamCounts[iLastTeam]];
+        iTeamIDs[iLookForNewTeam][iTeamCounts[iLookForNewTeam]] = iPlayer;
+        iTeamCounts[iLookForNewTeam]++;
+
+        if(game_values.teamcolors)
+            game_values.colorids[iPlayer] = iLookForNewTeam;
+    }
+
+    iAnimationTimer = 0;
+    iAnimationFrame = 0;
+
+    fAllReady = true;
+
+    for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
+        if(game_values.playercontrol[iPlayer] == 1) {
+            fReady[iPlayer] = false;
+            fAllReady = false;
+        } else {
+            fReady[iPlayer] = true;
+        }
+
+        //If debug build, then ignore the player ready stuff
+#ifdef _DEBUG
+        fReady[iPlayer] = true;
+        fAllReady = true;
+#endif
+
+        if(game_values.playercontrol[iPlayer] == 0)
+            continue;
+
+        if(game_values.teamcolors)
+            game_values.colorids[iPlayer] = GetTeam(iPlayer);
+        else
+            game_values.colorids[iPlayer] = iPlayer;
+
+        //Skip skins that are invalid
+        while(!rm->LoadMenuSkin(iPlayer, game_values.skinids[iPlayer], game_values.colorids[iPlayer], false)) {
+            if(++game_values.skinids[iPlayer] >= skinlist->GetCount())
+                game_values.skinids[iPlayer] = 0;
+        }
+    }
+}
+
+short MI_TeamSelectBase::OrganizeTeams()
+{
+    short iNumTeams = 0;
+    for(short iTeam = 0; iTeam < 4; iTeam++) {
+        game_values.teamcounts[iTeam] = 0;
+
+        if(iTeamCounts[iTeam] > 0) {
+            for(short iTeamSpot = 0; iTeamSpot < 3; iTeamSpot++)
+                game_values.teamids[iNumTeams][iTeamSpot] = iTeamIDs[iTeam][iTeamSpot];
+
+            game_values.teamcounts[iNumTeams] = iTeamCounts[iTeam];
+            iNumTeams++;
+        }
+    }
+
+    return iNumTeams;
+}
+
+short MI_TeamSelectBase::GetTeam(short iPlayerID)
+{
+    for(short iTeam = 0; iTeam < 4; iTeam++) {
+        for(short iSlot = 0; iSlot < iTeamCounts[iTeam]; iSlot++) {
+            if(iTeamIDs[iTeam][iSlot] == iPlayerID) {
+                return iTeam;
+            }
+        }
+    }
+
+    return -1;
+}
+
+void MI_TeamSelectBase::FindNewTeam(short iPlayerID, short iDirection)
+{
+    for(short iTeam = 0; iTeam < 4; iTeam++) {
+        for(short iTeamItem = 0; iTeamItem < iTeamCounts[iTeam]; iTeamItem++) {
+            if(iTeamIDs[iTeam][iTeamItem] == iPlayerID) {
+                iTeamCounts[iTeam]--;
+
+                for(int iMovePlayer = iTeamItem; iMovePlayer < iTeamCounts[iTeam]; iMovePlayer++)
+                    iTeamIDs[iTeam][iMovePlayer] = iTeamIDs[iTeam][iMovePlayer + 1];
+
+                short iNewTeam = iTeam;
+                bool fOnlyTeam = true;
+
+                do {
+                    iNewTeam += iDirection;
+
+                    if(iNewTeam < 0)
+                        iNewTeam = 3;
+                    else if(iNewTeam > 3)
+                        iNewTeam = 0;
+
+                    fOnlyTeam = true;
+                    for(int iMovePlayer = 0; iMovePlayer < 4; iMovePlayer++) {
+                        if(iMovePlayer == iNewTeam)
+                            continue;
+
+                        if(iTeamCounts[iMovePlayer] > 0) {
+                            fOnlyTeam = false;
+                            break;
+                        }
+                    }
+                } while(fOnlyTeam);
+
+                iTeamIDs[iNewTeam][iTeamCounts[iNewTeam]] = iPlayerID;
+                iTeamCounts[iNewTeam]++;
+
+                if(game_values.teamcolors) {
+                    game_values.colorids[iPlayerID] = iNewTeam;
+
+                    //Skip skins that are invalid
+                    while(!rm->LoadMenuSkin(iPlayerID, game_values.skinids[iPlayerID], iNewTeam, false)) {
+                        if(++game_values.skinids[iPlayerID] >= skinlist->GetCount())
+                            game_values.skinids[iPlayerID] = 0;
+                    }
+                }
+
+                return;
+            }
+        }
+    }
+}
+
+
+/**************************************
+ * MI_TeamSelect Class
+ **************************************/
+
+MI_TeamSelect::MI_TeamSelect(gfxSprite * spr_background_ref, short x, short y) :
+    MI_TeamSelectBase(x, y)
+{
+    spr = spr_background_ref;
+    miImage = new MI_Image(spr, ix, iy, 0, 0, 416, 256, 1, 1, 0);
+}
+
+MI_TeamSelect::~MI_TeamSelect()
+{
+    delete miImage;
 }
 
 void MI_TeamSelect::Draw()
@@ -598,9 +804,6 @@ void MI_TeamSelect::Draw()
         rm->menu_plain_field.draw(ix + 208, iy + smw->ScreenHeight * 0.47f, 412, 160, 100, 32);
         rm->menu_font_large.drawCentered(smw->ScreenWidth/2, iy + smw->ScreenHeight * 0.48f, "Continue");
     }
-
-	////// Overlay
-	
 }
 
 MenuCodeEnum MI_TeamSelect::SendInput(CPlayerInput * playerInput)
@@ -731,204 +934,14 @@ MenuCodeEnum MI_TeamSelect::SendInput(CPlayerInput * playerInput)
     return MENU_CODE_NONE;
 }
 
-MenuCodeEnum MI_TeamSelect::Modify(bool modify)
-{
-    fModifying = modify;
-    return MENU_CODE_MODIFY_ACCEPTED;
-}
-
-void MI_TeamSelect::FindNewTeam(short iPlayerID, short iDirection)
-{
-    for(short iTeam = 0; iTeam < 4; iTeam++) {
-        for(short iTeamItem = 0; iTeamItem < iTeamCounts[iTeam]; iTeamItem++) {
-            if(iTeamIDs[iTeam][iTeamItem] == iPlayerID) {
-                iTeamCounts[iTeam]--;
-
-                for(int iMovePlayer = iTeamItem; iMovePlayer < iTeamCounts[iTeam]; iMovePlayer++)
-                    iTeamIDs[iTeam][iMovePlayer] = iTeamIDs[iTeam][iMovePlayer + 1];
-
-                short iNewTeam = iTeam;
-                bool fOnlyTeam = true;
-
-                do {
-                    iNewTeam += iDirection;
-
-                    if(iNewTeam < 0)
-                        iNewTeam = 3;
-                    else if(iNewTeam > 3)
-                        iNewTeam = 0;
-
-                    fOnlyTeam = true;
-                    for(int iMovePlayer = 0; iMovePlayer < 4; iMovePlayer++) {
-                        if(iMovePlayer == iNewTeam)
-                            continue;
-
-                        if(iTeamCounts[iMovePlayer] > 0) {
-                            fOnlyTeam = false;
-                            break;
-                        }
-                    }
-                } while(fOnlyTeam);
-
-                iTeamIDs[iNewTeam][iTeamCounts[iNewTeam]] = iPlayerID;
-                iTeamCounts[iNewTeam]++;
-
-                if(game_values.teamcolors) {
-                    game_values.colorids[iPlayerID] = iNewTeam;
-
-                    //Skip skins that are invalid
-                    while(!rm->LoadMenuSkin(iPlayerID, game_values.skinids[iPlayerID], iNewTeam, false)) {
-                        if(++game_values.skinids[iPlayerID] >= skinlist->GetCount())
-                            game_values.skinids[iPlayerID] = 0;
-                    }
-                }
-
-                return;
-            }
-        }
-    }
-}
-
 void MI_TeamSelect::Reset()
 {
-    for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
-        short iTeamID;
-        short iSlotID;
-        bool fFound = false;
-        for(iTeamID = 0; iTeamID < 4; iTeamID++) {
-            for(iSlotID = 0; iSlotID < iTeamCounts[iTeamID]; iSlotID++) {
-                if(iTeamIDs[iTeamID][iSlotID] == iPlayer) {
-                    fFound = true;
-                    break;
-                }
-            }
-
-            if(fFound)
-                break;
-        }
-
-        if(fFound) {
-            //Need to remove the player
-            if(game_values.playercontrol[iPlayer] == 0) {
-                iTeamCounts[iTeamID]--;
-
-                if(iTeamCounts[iTeamID] > iSlotID) {
-                    for(short iSlot = iSlotID; iSlot < iTeamCounts[iTeamID]; iSlot++) {
-                        iTeamIDs[iTeamID][iSlot] = iTeamIDs[iTeamID][iSlot + 1];
-                    }
-                }
-            }
-        } else {
-            //A new player was added so find a spot for him
-            if(game_values.playercontrol[iPlayer] > 0) {
-                short iLookForNewTeam = iPlayer;
-
-                while(iTeamCounts[iLookForNewTeam] >= 3) {
-                    if(++iLookForNewTeam >= 4)
-                        iLookForNewTeam = 0;
-                }
-
-                iTeamIDs[iLookForNewTeam][iTeamCounts[iLookForNewTeam]] = iPlayer;
-                iTeamCounts[iLookForNewTeam]++;
-
-                if(game_values.teamcolors)
-                    game_values.colorids[iPlayer] = iLookForNewTeam;
-            }
-        }
-    }
-
-    //Check to see if there is only one team and if so, split them up
-
-    short iCountTeams = 0;
-    short iLastTeam = 0;
-    for(short iTeamID = 0; iTeamID < 4; iTeamID++) {
-        if(iTeamCounts[iTeamID] > 0) {
-            iCountTeams++;
-            iLastTeam = iTeamID;
-        }
-    }
-
-    if(iCountTeams == 1) {
-        short iLookForNewTeam = iLastTeam;
-        if(++iLookForNewTeam >= 4)
-            iLookForNewTeam = 0;
-
-        iTeamCounts[iLastTeam]--;
-        short iPlayer = iTeamIDs[iLastTeam][iTeamCounts[iLastTeam]];
-        iTeamIDs[iLookForNewTeam][iTeamCounts[iLookForNewTeam]] = iPlayer;
-        iTeamCounts[iLookForNewTeam]++;
-
-        if(game_values.teamcolors)
-            game_values.colorids[iPlayer] = iLookForNewTeam;
-    }
-
-    iAnimationTimer = 0;
-    iAnimationFrame = 0;
-
-    fAllReady = true;
-
-    for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
+	MI_TeamSelectBase::Reset();
+    
+	for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
         iFastScroll[iPlayer] = 0;
         iFastScrollTimer[iPlayer] = 0;
-
-        if(game_values.playercontrol[iPlayer] == 1) {
-            fReady[iPlayer] = false;
-            fAllReady = false;
-        } else {
-            fReady[iPlayer] = true;
-        }
-
-        //If debug build, then ignore the player ready stuff
-#ifdef _DEBUG
-        fReady[iPlayer] = true;
-        fAllReady = true;
-#endif
-
-        if(game_values.playercontrol[iPlayer] == 0)
-            continue;
-
-        if(game_values.teamcolors)
-            game_values.colorids[iPlayer] = GetTeam(iPlayer);
-        else
-            game_values.colorids[iPlayer] = iPlayer;
-
-        //Skip skins that are invalid
-        while(!rm->LoadMenuSkin(iPlayer, game_values.skinids[iPlayer], game_values.colorids[iPlayer], false)) {
-            if(++game_values.skinids[iPlayer] >= skinlist->GetCount())
-                game_values.skinids[iPlayer] = 0;
-        }
-    }
-}
-
-short MI_TeamSelect::OrganizeTeams()
-{
-    short iNumTeams = 0;
-    for(short iTeam = 0; iTeam < 4; iTeam++) {
-        game_values.teamcounts[iTeam] = 0;
-
-        if(iTeamCounts[iTeam] > 0) {
-            for(short iTeamSpot = 0; iTeamSpot < 3; iTeamSpot++)
-                game_values.teamids[iNumTeams][iTeamSpot] = iTeamIDs[iTeam][iTeamSpot];
-
-            game_values.teamcounts[iNumTeams] = iTeamCounts[iTeam];
-            iNumTeams++;
-        }
-    }
-
-    return iNumTeams;
-}
-
-short MI_TeamSelect::GetTeam(short iPlayerID)
-{
-    for(short iTeam = 0; iTeam < 4; iTeam++) {
-        for(short iSlot = 0; iSlot < iTeamCounts[iTeam]; iSlot++) {
-            if(iTeamIDs[iTeam][iSlot] == iPlayerID) {
-                return iTeam;
-            }
-        }
-    }
-
-    return -1;
+	}
 }
 
 /**************************************
@@ -937,41 +950,64 @@ short MI_TeamSelect::GetTeam(short iPlayerID)
 MI_TeamSelect2::MI_TeamSelect2(gfxSprite * spr_background, short x, short y) :
 	MI_TeamSelectBase(x, y)
 {
+	// Allocate skin grid sprites
+	skinGrid = new gfxSprite ** [skinlist->GetCount()];
+
+	short i, j;
+	for (i = 0; i < skinlist->GetCount(); i++)
+	{
+		skinGrid[i] = new gfxSprite * [PGFX_LAST];
+
+		for(j = 0; j < PGFX_LAST; j++) {
+			skinGrid[i][j] = new gfxSprite;
+			skinGrid[i][j]->SetWrap(true);
+		}
+		
+		bool ok = gfx_loadmenuskin(skinGrid[i], skinlist->GetIndex(i), 255, 0, 255, 1, false);
+		
+		/*// skip invalid skins
+		if (!ok) {
+			i--;
+		}*/
+	}
 }
 MI_TeamSelect2::~MI_TeamSelect2()
 {
+	// Deallocate skin grid sprites
+	short i, j;
+	for (i = 0; i < skinlist->GetCount(); i++)
+	{
+		for(j = 0; j < PGFX_LAST; j++) {
+			delete skinGrid[i][j];
+		}
+		delete skinGrid[i];
+	}
+	delete skinGrid;
 }
 
-void MI_TeamSelect2::Update()
-{
-
-}
 void MI_TeamSelect2::Draw()
 {
 }
 
 MenuCodeEnum MI_TeamSelect2::SendInput(CPlayerInput * playerInput)
 {
+    for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
+		if(game_values.playercontrol[iPlayer] > 0 && (DEVICE_KEYBOARD != playerInput->inputControls[iPlayer]->iDevice || iPlayer == 0)) {
+			if(playerInput->outputControls[iPlayer].menu_cancel.fPressed) {
+				return MENU_CODE_UNSELECT_ITEM;
+			}
+		}
+	}
+
     return MENU_CODE_NONE;
-}
-MenuCodeEnum MI_TeamSelect2::Modify(bool modify)
-{
-    fModifying = modify;
-    return MENU_CODE_MODIFY_ACCEPTED;
 }
 
 void MI_TeamSelect2::Reset()
 {
+	MI_TeamSelectBase::Reset();
 
 }
-short MI_TeamSelect2::OrganizeTeams()
-{
-    return -1;
-}
-short MI_TeamSelect2::GetTeam(short iPlayerID)
-{
-    return -1;
-}
+
 
 /**************************************
  * MI_PlayerSelect Class
