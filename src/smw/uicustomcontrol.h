@@ -131,6 +131,9 @@ class MI_TeamSelectBase : public UI_Control
 		short iRandomAnimationFrame;
 		short iColorAnimationCounter;
 
+		short iFastScroll[4];
+		short iFastScrollTimer[4];
+
 		bool fReady[4];
 		bool fAllReady;
 };
@@ -147,8 +150,6 @@ class MI_TeamSelect : public MI_TeamSelectBase
 		void Reset();
 
 	private:
-		short iFastScroll[4];
-		short iFastScrollTimer[4];
 
 	friend class Menu;
 };
@@ -165,7 +166,7 @@ class MI_TeamSelect2 : public MI_TeamSelectBase
 
 	private:
 		static const short grid_w = 12;
-		static const short grid_h = 4;
+		static const short grid_h = 3;
 		gfxSprite **** skinGrid; //skinGrid*[color][skin][pose]
 		short gridIndices[grid_w * grid_h]; // skin indices 
 		short cursors[4]; // grid indices
