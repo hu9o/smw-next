@@ -129,6 +129,7 @@ class MI_TeamSelectBase : public UI_Control
 		short iAnimationTimer;
 		short iAnimationFrame;
 		short iRandomAnimationFrame;
+		short iColorAnimationCounter;
 
 		bool fReady[4];
 		bool fAllReady;
@@ -165,7 +166,10 @@ class MI_TeamSelect2 : public MI_TeamSelectBase
 	private:
 		static const short grid_w = 12;
 		static const short grid_h = 4;
-		gfxSprite *** skinGrid;
+		gfxSprite **** skinGrid; //skinGrid*[color][skin][pose]
+		short gridIndices[grid_w * grid_h]; // skin indices 
+		short cursors[4]; // grid indices
+		short teamSelectFlag; // whether players have selected a skin
 
 	friend class Menu;
 };

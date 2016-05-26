@@ -33,8 +33,8 @@ Uint8 * colorcodes[3];
 
 #define NUM_SCHEMES 9
 
-//[numplayers][colorscheme][colorcomponents][numcolors]
-Uint8 * colorschemes[4][NUM_SCHEMES][3];
+//[numplayers+1(neutral)][colorscheme][colorcomponents][numcolors]
+Uint8 * colorschemes[4+1][NUM_SCHEMES][3];
 short numcolors = 0;
 
 extern short x_shake;
@@ -67,7 +67,7 @@ bool gfx_init(int w, int h, bool fullscreen)
     for(int k = 0; k < 3; k++) {
         colorcodes[k] = NULL;
 
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < 4+1; i++)
             for(int j = 0; j < NUM_SCHEMES; j++)
                 colorschemes[i][j][k] = NULL;
     }
@@ -80,7 +80,7 @@ void gfx_freepalette()
     for(int k = 0; k < 3; k++) {
         delete [] colorcodes[k];
 
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < 4+1; i++)
             for(int j = 0; j < NUM_SCHEMES; j++)
                 delete [] colorschemes[i][j][k];
     }
@@ -102,7 +102,7 @@ bool gfx_loadpalette()
     for(int k = 0; k < 3; k++) {
         colorcodes[k] = new Uint8[numcolors];
 
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < 4+1; i++)
             for(int j = 0; j < NUM_SCHEMES; j++)
                 colorschemes[i][j][k] = new Uint8[numcolors];
     }
@@ -126,7 +126,7 @@ bool gfx_loadpalette()
 
     counter += palette->pitch - palette->w * 3;
 
-    for(int i = 0; i < 4; i++) {
+    for(int i = 0; i < 4+1; i++) {
         for(int j = 0; j < NUM_SCHEMES; j++) {
             for(int m = 0; m < numcolors; m++) {
                 colorschemes[i][j][iRedIndex][m] = pixels[counter++];
@@ -169,7 +169,7 @@ void gfx_close()
     for(int i = 0; i < 3; i++) {
         delete [] colorcodes[i];
 
-        for(int j = 0; j < 4; j++)
+        for(int j = 0; j < 4+1; j++)
             for(int k = 0; k < NUM_SCHEMES; k++)
                 delete [] colorschemes[j][k][i];
     }

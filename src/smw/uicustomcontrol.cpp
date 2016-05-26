@@ -534,6 +534,7 @@ MI_TeamSelectBase::MI_TeamSelectBase(gfxSprite * spr_background, short x, short 
     iAnimationTimer = 0;
     iAnimationFrame = 0;
     iRandomAnimationFrame = 0;
+	iColorAnimationCounter = 0;
 }
 MI_TeamSelectBase::~MI_TeamSelectBase()
 {
@@ -551,6 +552,10 @@ void MI_TeamSelectBase::Update()
         iRandomAnimationFrame += 32;
         if(iRandomAnimationFrame >= 128)
             iRandomAnimationFrame = 0;
+
+		iColorAnimationCounter++;
+        if(iColorAnimationCounter >= 24) // use multiple of 6 so we can cycle over 2 or 3 images
+            iColorAnimationCounter = 0;
     }
 }
 
@@ -774,12 +779,12 @@ void MI_TeamSelect::Draw()
 
     miImage->Draw();
 
-    short iPlayerCount = 0;
+    /*short iPlayerCount = 0;
 
     for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
         if(game_values.playercontrol[iPlayer] > 0)
             iPlayerCount++;
-    }
+    }*/
 
     for(short iTeam = 0; iTeam < 4; iTeam++) {
         for(short iTeamItem = 0; iTeamItem < iTeamCounts[iTeam]; iTeamItem++) {
@@ -955,43 +960,97 @@ void MI_TeamSelect::Reset()
 MI_TeamSelect2::MI_TeamSelect2(gfxSprite * spr_background, short x, short y) :
 	MI_TeamSelectBase(spr_background, x, y)
 {
+	teamSelectFlag = 0;
+
     miImage = new MI_Image(spr, ix, iy, 0, 0, 640, 480, 1, 1, 0);
 
 	// Allocate skin grid sprites
-	skinGrid = new gfxSprite ** [skinlist->GetCount()];
+	skinGrid = new gfxSprite *** [4+1];
 
-	short i, j;
-	for (i = 0; i < skinlist->GetCount(); i++)
+	short iColor, iSkin, iPose;
+	for (iColor = 0; iColor < 4+1; iColor++)
 	{
-		skinGrid[i] = new gfxSprite * [PGFX_LAST];
+		skinGrid[iColor] = new gfxSprite ** [skinlist->GetCount()];
+		for (iSkin = 0; iSkin < skinlist->GetCount(); iSkin++)
+		{
+			skinGrid[iColor][iSkin] = new gfxSprite * [PGFX_LAST];
 
-		for(j = 0; j < PGFX_LAST; j++) {
-			skinGrid[i][j] = new gfxSprite;
-			skinGrid[i][j]->SetWrap(true);
+			for(iPose = 0; iPose < PGFX_LAST; iPose++) {
+				skinGrid[iColor][iSkin][iPose] = new gfxSprite;
+				skinGrid[iColor][iSkin][iPose]->SetWrap(true);
+			}
+		
+			bool ok = gfx_loadmenuskin(skinGrid[iColor][iSkin], skinlist->GetIndex(iSkin), 255, 0, 255, iColor, false);
+			// dont check for invalid skins ?
 		}
-		
-		bool ok = gfx_loadmenuskin(skinGrid[i], skinlist->GetIndex(i), 255, 0, 255, 1, false);
-		
-		/*// skip invalid skins
-		if (!ok) {
-			i--;
-		}*/
 	}
+
+	//// Fill grid with skin indices
+	short iGrid=0;
+
+	// Start with used skins
+	for (int iPlayer = 0; iPlayer < 4; iPlayer++)
+	{
+		if (game_values.playercontrol[iPlayer] > 0) { // if player or bot
+			short iSkin = game_values.skinids[iPlayer];
+			// grid already contains this skin ?
+			short jGrid = 0;
+			while (jGrid < iGrid && gridIndices[jGrid] != iSkin) jGrid++;
+			if (jGrid != iGrid) {			// contains
+				cursors[iPlayer] = jGrid;
+			} else {						// does not contain
+				cursors[iPlayer] = iGrid;
+				gridIndices[iGrid++] = iSkin;
+			}
+
+		}
+	}
+
+	// Fill the rest
+	for (iSkin = 0; iSkin < skinlist->GetCount(); iSkin++)
+	{
+		if (iGrid < grid_w * grid_h - 1) {
+			// grid already contains this skin ?
+			short jGrid = 0;
+			while (jGrid < iGrid && gridIndices[jGrid] != iSkin) jGrid++;
+			if (jGrid != iGrid) {			// contains
+			} else {						// does not contain
+				gridIndices[iGrid++] = iSkin;
+			}
+		}
+	}
+	gridIndices[grid_w * grid_h - 1] = -1; // random
 }
+
 MI_TeamSelect2::~MI_TeamSelect2()
 {
 	// Deallocate skin grid sprites
-	short i, j;
-	for (i = 0; i < skinlist->GetCount(); i++)
+	short iColor, iSkin, iPose;
+	for (iColor = 0; iColor < 4+1; iColor++)
 	{
-		for(j = 0; j < PGFX_LAST; j++) {
-			delete skinGrid[i][j];
+		for (iSkin = 0; iSkin < skinlist->GetCount(); iSkin++)
+		{
+			for(iPose = 0; iPose < PGFX_LAST; iPose++) {
+				delete skinGrid[iColor][iSkin][iPose];
+			}
+			delete skinGrid[iColor][iSkin];
 		}
-		delete skinGrid[i];
+		delete skinGrid[iColor];
 	}
 	delete skinGrid;
 
     delete miImage;
+}
+
+void MI_TeamSelect2::Reset()
+{
+	/*MI_TeamSelectBase::Reset();
+
+	short i = 0;
+	for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
+        if(game_values.playercontrol[iPlayer] > 0)
+            cursors[iPlayer] = i++;
+	}*/
 }
 
 void MI_TeamSelect2::Draw()
@@ -1004,31 +1063,136 @@ void MI_TeamSelect2::Draw()
 	const short ow = grid_w * 48 - 16;
 	const short oh = grid_h * 48 - 16;
 	const short ox = (640 - ow) / 2;
-	const short oy = (480 - oh) / 2 + 62;
+	const short oy = (480 - oh) / 2 + 76;
 
-	for (int i = 0; i < skinlist->GetCount() && i < grid_h*grid_w; i++)
+	for (int iGrid = 0; iGrid < grid_h*grid_w; iGrid++)
 	{
-		skinGrid[i][0]->draw(ox + (i%grid_w) * 48, oy + (i/grid_w) * 48, 0, 0, 32, 32);
+		// a lot of the following can be performed only on player selection change,
+		// if performance is of any concern.
+
+		short selected = 0; // nb players whose cursor is at iGrid
+		short colorsIDs[4] = {0, 0, 0, 0};
+
+		for (int iPlayer = 0; iPlayer < 4; iPlayer++)
+		{
+			if ((teamSelectFlag & (1 << iPlayer)) == 0 && cursors[iPlayer] == iGrid)
+				colorsIDs[selected++] = game_values.colorids[iPlayer];
+		}
+
+		short color;
+		short count = iColorAnimationCounter / 2; // cycles [0 to 12[
+		switch (selected) {
+		case 1:
+			color = colorsIDs[0];
+			break;
+		case 2:
+		case 3:
+		case 4:
+			color = colorsIDs[(count % selected)];
+			break;
+		default:
+			color = 4;
+		}
+
+		short iSkin = gridIndices[iGrid];
+		short xpos = ox + (iGrid%grid_w) * 48;
+		short ypos = oy + (iGrid/grid_w) * 48;
+		
+		// skin or random
+		if (iSkin > -1) {
+			skinGrid[color][iSkin][selected? iAnimationFrame : 0]->draw(xpos, ypos, 0, 0, 32, 32);
+		} else {
+			spr->draw(xpos, ypos, 416, iRandomAnimationFrame, 42, 32);
+		}
+
+		// hand cursor
+		for (int iPlayer = 4-1; iPlayer > -1; iPlayer--)
+		{
+			if ((teamSelectFlag & (1 << iPlayer)) == 0 && cursors[iPlayer] == iGrid)
+				spr->draw(xpos + 20 + (iPlayer%2) * 6, ypos + 20 + (iPlayer/2) * 6, 0, 32, 32, 32);
+		}
 	}
+
+
+    /*for(short iTeam = 0; iTeam < 4; iTeam++) {
+        for(short iTeamItem = 0; iTeamItem < iTeamCounts[iTeam]; iTeamItem++) {
+            short iPlayerID = iTeamIDs[iTeam][iTeamItem];
+
+            if(game_values.randomskin[iPlayerID])
+                spr->draw(iTeam * 96 + 43 + ix, iTeamItem * 36 + 52 + iy, 416, fReady[iPlayerID] ? 0 : iRandomAnimationFrame, 42, 32);
+            else
+                rm->spr_player[iPlayerID][fReady[iPlayerID] ? 0 : iAnimationFrame]->draw(iTeam * 96 + 48 + ix, iTeamItem * 36 + 52 + iy, 0, 0, 32, 32);
+
+            rm->spr_menu_boxed_numbers.draw(iTeam * 96 + 44 + ix, iTeamItem * 36 + 72 + iy, iPlayerID * 16, game_values.colorids[iPlayerID] * 16, 16, 16);
+        }
+
+        if(game_values.playercontrol[iTeam] > 0) {
+            rm->spr_player_select_ready.draw(iTeam * 160 + 16, 368, 0, 0, 128, 96);
+
+            rm->spr_menu_boxed_numbers.draw(iTeam * 160 + 32, 388, iTeam * 16, game_values.colorids[iTeam] * 16, 16, 16);
+            rm->menu_font_small.drawChopRight(iTeam * 160 + 52, 404 - rm->menu_font_small.getHeight(), 80, game_values.randomskin[iTeam] ? "Random" : skinlist->GetSkinName(game_values.skinids[iTeam]));
+
+            rm->spr_player_select_ready.draw(iTeam * 160 + 64, 408, 128, (!fReady[iTeam] ? 0 : (game_values.playercontrol[iTeam] == 1 ? 32 : 64)), 34, 32);
+        }
+    }*/
 }
 
 MenuCodeEnum MI_TeamSelect2::SendInput(CPlayerInput * playerInput)
 {
     for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
-		if(game_values.playercontrol[iPlayer] > 0 && (DEVICE_KEYBOARD != playerInput->inputControls[iPlayer]->iDevice || iPlayer == 0)) {
-			if(playerInput->outputControls[iPlayer].menu_cancel.fPressed) {
-				return MENU_CODE_UNSELECT_ITEM;
+        COutputControl * playerKeys = &game_values.playerInput.outputControls[iPlayer];
+
+		if(game_values.playercontrol[iPlayer] > 0) {
+			if ((teamSelectFlag & (1 << iPlayer)) == 0) {
+				// selecting skin
+
+				if(playerKeys->menu_left.fPressed) {
+					if (cursors[iPlayer] % grid_w == 0) // wrap left
+						cursors[iPlayer] += grid_w - 1;
+					else
+						cursors[iPlayer]--;
+				}
+				if(playerKeys->menu_right.fPressed) {
+					if (cursors[iPlayer] % grid_w == grid_w - 1) // wrap right
+						cursors[iPlayer] -= grid_w - 1;
+					else
+						cursors[iPlayer]++;
+				}
+
+				if(playerKeys->menu_up.fPressed) {
+					if (cursors[iPlayer] < grid_w) // wrap top
+						cursors[iPlayer] += grid_w * (grid_h-1);
+					else
+						cursors[iPlayer] -= grid_w;
+				}
+				if(playerKeys->menu_down.fPressed) {
+					if (cursors[iPlayer] >= grid_w * (grid_h-1)) // wrap bottom
+						cursors[iPlayer] -= grid_w * (grid_h-1);
+					else
+						cursors[iPlayer] += grid_w;
+				}
+		
+				if(playerKeys->menu_select.fPressed) {
+					teamSelectFlag |= (1 << iPlayer);
+				}
+
+				if(playerInput->outputControls[iPlayer].menu_cancel.fPressed) {
+					if(DEVICE_KEYBOARD != playerInput->inputControls[iPlayer]->iDevice || iPlayer == 0) {
+						return MENU_CODE_UNSELECT_ITEM;
+					}
+				}
+
+			} else {
+				// selecting team
+
+				if(playerInput->outputControls[iPlayer].menu_cancel.fPressed) {
+					teamSelectFlag &= ~(1 << iPlayer);
+				}
 			}
 		}
 	}
 
     return MENU_CODE_NONE;
-}
-
-void MI_TeamSelect2::Reset()
-{
-	MI_TeamSelectBase::Reset();
-
 }
 
 
