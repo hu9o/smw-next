@@ -763,9 +763,47 @@ bool MI_SkinSelectPanel::isPlayerReady(int playerID)
 	return ready & (1<<playerID);
 }
 
-void MI_SkinSelectPanel::setPlayerReady(int playerID, bool hasSelected)
+void MI_SkinSelectPanel::setPlayerReady(int playerID, bool isReadyNow)
 {
-	ready ^= (-hasSelected ^ ready) & (1 << playerID); // set playerId-th bit to hasSelected
+	ready ^= (-isReadyNow ^ ready) & (1 << playerID); // set playerId-th bit to hasSelected
+
+	// if the player skin is to be displayed again
+	// we need to select it in the grid
+	// after making sure the skin is present
+	short skinId = game_values.randomskin[playerID]? -1 : game_values.skinids[playerID];
+
+	if (!isReadyNow && gridIndices[cursors[playerID]] != skinId) {
+		// look for the skin in the grid
+		bool found = false;
+		for (int i = 0; i < grid_w * grid_h; i++) {
+			if (gridIndices[i] == skinId) {
+				cursors[playerID] = i;
+				found = true;
+				break;
+			}
+		}
+		assert(skinId != -1 || found); // random skin is always on the grid
+
+		// not found, replace a skin at a random position with the one we want
+		if (!found) {
+			assert(grid_w * grid_h > 4);
+			int randPos;
+
+			do {
+				randPos = RNGMAX(grid_w * grid_h);
+
+				for (int i = 0; i < 4; i++)
+				{
+					if (cursors[i] == randPos)
+						randPos = -1; // already taken, we can't replace it
+				}
+			} while (randPos == -1);
+
+			// replace skin and point player's cursor on it
+			gridIndices[randPos] = game_values.skinids[playerID];
+			cursors[playerID] = randPos;
+		}
+	}
 }
 
 /**************************************
@@ -1081,25 +1119,38 @@ void MI_TeamSelect::Draw()
 
 MenuCodeEnum MI_TeamSelect::SendInput(CPlayerInput * playerInput)
 {
+	bool teamSelect[4];										// current user in teamselect menu ?
+	memset(teamSelect, 0, sizeof(teamSelect));				// for now we say no
+	
+	// the best way I could come up with...
+
     for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
-        COutputControl * playerKeys = &game_values.playerInput.outputControls[iPlayer];
-
-
-		bool yieldControl = false;
-
-		if (!fSelectedSkin[iPlayer]) {
-			// the best way I could come up with
-			skinSelectCtrl.setPlayerReady(iPlayer, false);
-			MenuCodeEnum result = skinSelectCtrl.SendInput(playerInput);
-			fSelectedSkin[iPlayer] = skinSelectCtrl.isPlayerReady(iPlayer);
-			
-			if (result == MENU_CODE_UNSELECT_ITEM)
-				yieldControl = true;
-		} else {
-			yieldControl = true;
+		if (!fSelectedSkin[iPlayer]) {						// if current player should be in skinselect menu
+			skinSelectCtrl.setPlayerReady(iPlayer, false);	// enable skin selection
 		}
+	}
+	
+	MenuCodeEnum result = skinSelectCtrl.SendInput(playerInput);
+			
+    for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
+		if (!fSelectedSkin[iPlayer]) {						// if current player is in skinselect menu
+			fSelectedSkin[iPlayer] = skinSelectCtrl.isPlayerReady(iPlayer); // disable skinselect if player has chosen
+		} else {											// if current player is in skinselect menu
+			teamSelect[iPlayer] = true;
+		}
+	}
+	
+	if (result == MENU_CODE_UNSELECT_ITEM)	{				// quit menu: all players yield exit code handling to the teamselect menu
+		memset(teamSelect, 0, sizeof(teamSelect));
+		teamSelect[0] = true;								// only first player
+	}
 
-		if (yieldControl) {
+	// end of skinselect menu code, now to teamselect :
+
+	for(short iPlayer = 0; iPlayer < 4; iPlayer++) {
+		if (teamSelect[iPlayer]) {
+			COutputControl * playerKeys = &game_values.playerInput.outputControls[iPlayer];
+
 			if(game_values.playercontrol[iPlayer] > 0 && !fReady[iPlayer]) { //if this player is player or cpu
 				if(playerKeys->menu_left.fPressed) {
 					if(playerKeys->menu_right.fDown)
