@@ -1592,7 +1592,7 @@ void Menu::CreateMenu()
     // Team Select Settings
     //***********************
 	
-	bool useNewMenu = true;
+	bool useNewMenu = false;
 
 	if (!useNewMenu) {
 		miTeamSelect = new MI_TeamSelect(&rm->spr_player_select_background, 112, 96);

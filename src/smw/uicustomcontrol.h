@@ -99,13 +99,47 @@ class MI_InputControlContainer : public UI_Control
 		MI_Button * miBackButton;
 };
 
+class MI_SkinSelectPanel : public UI_Control
+{
+	public:
+		MI_SkinSelectPanel(gfxSprite * spr_background, short x, short y);
+		virtual ~MI_SkinSelectPanel();
+
+		void Update();
+		void Draw();
+		MenuCodeEnum SendInput(CPlayerInput * playerInput);
+		MenuCodeEnum Modify(bool modify);
+		void Reset();
+		
+		bool isPlayerReady(int playerID);
+		void setPlayerReady(int playerID, bool hasSelected);
+
+		friend class Menu;
+	
+	protected:
+		MI_Image * miImage;
+		gfxSprite * spr;
+		
+		short iAnimationTimer;
+		short iAnimationFrame;
+		short iRandomAnimationFrame;
+		short iColorAnimationCounter;
+
+		static const short grid_w = 12;
+		static const short grid_h = 3;
+		gfxSprite **** skinGrid; //skinGrid*[color][skin][pose]
+		short gridIndices[grid_w * grid_h]; // skin indices 
+		short cursors[4]; // grid indices
+		short ready; // whether players have selected a skin
+};
+
 class MI_TeamSelectBase : public UI_Control
 {
 	public:
 		MI_TeamSelectBase(gfxSprite * spr_background, short x, short y);
 		virtual ~MI_TeamSelectBase();
 
-		void Update();
+		virtual void Update();
 		virtual void Draw() = 0;
 
 		virtual MenuCodeEnum SendInput(CPlayerInput * playerInput) = 0;
@@ -133,7 +167,9 @@ class MI_TeamSelectBase : public UI_Control
 
 		short iFastScroll[4];
 		short iFastScrollTimer[4];
-
+		
+		bool fSelectedSkin[4];
+		bool fAllSelectedSkin;
 		bool fReady[4];
 		bool fAllReady;
 };
@@ -144,12 +180,14 @@ class MI_TeamSelect : public MI_TeamSelectBase
 
 		MI_TeamSelect(gfxSprite * spr_background, short x, short y);
 		virtual ~MI_TeamSelect();
-
+		
+		void Update();
 		void Draw();
 		MenuCodeEnum SendInput(CPlayerInput * playerInput);
 		void Reset();
 
 	private:
+		MI_SkinSelectPanel skinSelectCtrl;
 
 	friend class Menu;
 };
