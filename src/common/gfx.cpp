@@ -1000,6 +1000,19 @@ bool gfxSprite::drawStretch(short x, short y, short w, short h, short srcx, shor
     return true;
 }
 
+bool gfxSprite::draw4slices(short x, short y, short w, short h)
+{
+	// size multiple of 16 is better
+	int hw = w/2;
+	int hh = h/2;
+	draw(x,			y,			0,			0,			hw,	hh);
+	draw(x + hw,	y,			512 - hw,	0,			hw,	hh);
+	draw(x,			y + hh,		0,			480 - hh,	hw,	hh);
+	draw(x + hw,	y + hh,		512 - hw,	480 - hh,	hw,	hh);
+
+    return true;
+}
+
 void gfxSprite::setalpha(Uint8 alpha)
 {
     if( (SDL_SetAlpha(m_picture, SDL_SRCALPHA | SDL_RLEACCEL, alpha)) < 0) {

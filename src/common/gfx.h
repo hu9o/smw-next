@@ -55,6 +55,7 @@ class gfxSprite
 		bool draw(short x, short y);
 		bool draw(short x, short y, short srcx, short srcy, short w, short h, short iHiddenDirection = -1, short iHiddenValue = -1);
 		bool drawStretch(short x, short y, short w, short h, short srcx, short srcy, short srcw, short srch);
+		bool draw4slices(short x, short y, short w, short h);
 
 		void setalpha(Uint8 alpha);
 

@@ -559,11 +559,11 @@ MI_SkinSelectPanel::MI_SkinSelectPanel(gfxSprite * spr_background, short x, shor
 			short iSkin = game_values.skinids[iPlayer];
 			// grid already contains this skin ?
 			short jGrid = 0;
-			while (jGrid < iGrid && gridIndices[jGrid] != iSkin) jGrid++;
+			while (jGrid < iGrid && skinIdGrid[jGrid] != iSkin) jGrid++;
 			if (jGrid != iGrid) {			// contains
 				cursors[iPlayer] = jGrid;
 			} else {						// does not contain
-				gridIndices[iGrid] = iSkin;
+				skinIdGrid[iGrid] = iSkin;
 				cursors[iPlayer] = iGrid;
 				game_values.skinids[iPlayer] = iSkin;
 				game_values.randomskin[iPlayer] = false;
@@ -580,14 +580,14 @@ MI_SkinSelectPanel::MI_SkinSelectPanel(gfxSprite * spr_background, short x, shor
 		if (iGrid < grid_w * grid_h - 1) {
 			// grid already contains this skin ?
 			short jGrid = 0;
-			while (jGrid < iGrid && gridIndices[jGrid] != iSkin) jGrid++;
+			while (jGrid < iGrid && skinIdGrid[jGrid] != iSkin) jGrid++;
 			if (jGrid != iGrid) {			// contains
 			} else {						// does not contain
-				gridIndices[iGrid++] = iSkin;
+				skinIdGrid[iGrid++] = iSkin;
 			}
 		}
 	}
-	gridIndices[grid_w * grid_h - 1] = -1; // random
+	skinIdGrid[grid_w * grid_h - 1] = -1; // random
 }
 
 MI_SkinSelectPanel::~MI_SkinSelectPanel()
@@ -639,11 +639,23 @@ void MI_SkinSelectPanel::Draw()
         return;
 
 	//miImage->Draw();
+	
+	{		
+		// test
+		/*int c[6] = {x, 0, y, 0, hw, hh};
+		rm->menu_dialog.draw(c[0], c[2], c[1], c[3], c[4], c[5]);
+		c[0] += hw;
+		c[1] = 512 - hw;
+		rm->menu_dialog.draw(c[0], c[2], c[1], c[3], c[4], c[5]);
+		c[2] += hh;
+		c[3] = 480 - hh;
+		rm->menu_dialog.draw(c[0], c[2], c[1], c[3], c[4], c[5]);
+		c[0] -= hw;
+		c[1] = 0;
+		rm->menu_dialog.draw(c[0], c[2], c[1], c[3], c[4], c[5]);*/
+	}
 
-	const short ow = grid_w * 48 - 16;
-	const short oh = grid_h * 48 - 16;
-	const short ox = (640 - ow) / 2;
-	const short oy = (480 - oh) / 2 + 76 - 42;
+    rm->menu_dialog.draw4slices(ix, iy, width, height);
 
 	for (int iGrid = 0; iGrid < grid_h*grid_w; iGrid++)
 	{
@@ -665,9 +677,9 @@ void MI_SkinSelectPanel::Draw()
 		// color alternates between the colors ids of the selected players; is 4 if there' s none.
 		short color = (selected == 0)? 4 : colorsIDs[count % selected];
 
-		short iSkin = gridIndices[iGrid];
-		short xpos = ox + (iGrid%grid_w) * 48;
-		short ypos = oy + (iGrid/grid_w) * 48;
+		short iSkin = skinIdGrid[iGrid];
+		short xpos = ix + margin + (iGrid%grid_w) * (32 + charsp);
+		short ypos = iy + margin + (iGrid/grid_w) * (32 + charsp);
 		
 		// skin or random
 		if (iSkin > -1) {
@@ -729,7 +741,7 @@ MenuCodeEnum MI_SkinSelectPanel::SendInput(CPlayerInput * playerInput)
 				}
 
 				if (skinChanged) {
-					short newSkin = gridIndices[cursors[iPlayer]];
+					short newSkin = skinIdGrid[cursors[iPlayer]];
 					game_values.skinids[iPlayer] = (newSkin > -1)? newSkin : RNGMAX(skinlist->GetCount());
 					game_values.randomskin[iPlayer] = (newSkin == -1);
 					rm->LoadMenuSkin(iPlayer, game_values.skinids[iPlayer], game_values.colorids[iPlayer], false);
@@ -772,11 +784,11 @@ void MI_SkinSelectPanel::setPlayerReady(int playerID, bool isReadyNow)
 	// after making sure the skin is present
 	short skinId = game_values.randomskin[playerID]? -1 : game_values.skinids[playerID];
 
-	if (!isReadyNow && gridIndices[cursors[playerID]] != skinId) {
+	if (!isReadyNow && skinIdGrid[cursors[playerID]] != skinId) {
 		// look for the skin in the grid
 		bool found = false;
 		for (int i = 0; i < grid_w * grid_h; i++) {
-			if (gridIndices[i] == skinId) {
+			if (skinIdGrid[i] == skinId) {
 				cursors[playerID] = i;
 				found = true;
 				break;
@@ -800,7 +812,7 @@ void MI_SkinSelectPanel::setPlayerReady(int playerID, bool isReadyNow)
 			} while (randPos == -1);
 
 			// replace skin and point player's cursor on it
-			gridIndices[randPos] = game_values.skinids[playerID];
+			skinIdGrid[randPos] = game_values.skinids[playerID];
 			cursors[playerID] = randPos;
 		}
 	}
@@ -1062,7 +1074,7 @@ void MI_TeamSelectBase::FindNewTeam(short iPlayerID, short iDirection)
 
 MI_TeamSelect::MI_TeamSelect(gfxSprite * spr_background_ref, short x, short y) :
     MI_TeamSelectBase(spr_background_ref, x, y),
-	skinSelectCtrl(spr_background_ref, x, y)
+	skinSelectCtrl(spr_background_ref, (640 - MI_SkinSelectPanel::width) / 2, y + 120)
 {
     miImage = new MI_Image(spr, ix, iy, 0, 0, 416, 256, 1, 1, 0);
 }
@@ -1330,11 +1342,11 @@ MI_TeamSelect2::MI_TeamSelect2(gfxSprite * spr_background, short x, short y) :
 			short iSkin = game_values.skinids[iPlayer];
 			// grid already contains this skin ?
 			short jGrid = 0;
-			while (jGrid < iGrid && gridIndices[jGrid] != iSkin) jGrid++;
+			while (jGrid < iGrid && skinIdGrid[jGrid] != iSkin) jGrid++;
 			if (jGrid != iGrid) {			// contains
 				cursors[iPlayer] = jGrid;
 			} else {						// does not contain
-				gridIndices[iGrid] = iSkin;
+				skinIdGrid[iGrid] = iSkin;
 				cursors[iPlayer] = iGrid;
 				game_values.skinids[iPlayer] = iSkin;
 				game_values.randomskin[iPlayer] = false;
@@ -1351,14 +1363,14 @@ MI_TeamSelect2::MI_TeamSelect2(gfxSprite * spr_background, short x, short y) :
 		if (iGrid < grid_w * grid_h - 1) {
 			// grid already contains this skin ?
 			short jGrid = 0;
-			while (jGrid < iGrid && gridIndices[jGrid] != iSkin) jGrid++;
+			while (jGrid < iGrid && skinIdGrid[jGrid] != iSkin) jGrid++;
 			if (jGrid != iGrid) {			// contains
 			} else {						// does not contain
-				gridIndices[iGrid++] = iSkin;
+				skinIdGrid[iGrid++] = iSkin;
 			}
 		}
 	}
-	gridIndices[grid_w * grid_h - 1] = -1; // random
+	skinIdGrid[grid_w * grid_h - 1] = -1; // random
 }
 
 MI_TeamSelect2::~MI_TeamSelect2()
@@ -1424,7 +1436,7 @@ void MI_TeamSelect2::Draw()
 		// color alternates between the colors ids of the selected players; is 4 if there' s none.
 		short color = (selected == 0)? 4 : colorsIDs[count % selected];
 
-		short iSkin = gridIndices[iGrid];
+		short iSkin = skinIdGrid[iGrid];
 		short xpos = ox + (iGrid%grid_w) * 48;
 		short ypos = oy + (iGrid/grid_w) * 48;
 		
@@ -1510,7 +1522,7 @@ MenuCodeEnum MI_TeamSelect2::SendInput(CPlayerInput * playerInput)
 				}
 
 				if (skinChanged) {
-					short newSkin = gridIndices[cursors[iPlayer]];
+					short newSkin = skinIdGrid[cursors[iPlayer]];
 					game_values.skinids[iPlayer] = (newSkin > -1)? newSkin : RNGMAX(skinlist->GetCount());
 					game_values.randomskin[iPlayer] = (newSkin == -1);
 					rm->LoadMenuSkin(iPlayer, game_values.skinids[iPlayer], game_values.colorids[iPlayer], false);

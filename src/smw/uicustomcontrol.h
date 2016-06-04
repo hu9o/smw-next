@@ -113,6 +113,20 @@ class MI_SkinSelectPanel : public UI_Control
 		
 		bool isPlayerReady(int playerID);
 		void setPlayerReady(int playerID, bool hasSelected);
+		
+
+		// space between the border and actual characters sprites
+		static const short margin = 24;
+		// space between each character sprite, both in x and y
+		static const short charsp = 16;
+		// number of characters sprites in a row
+		static const short grid_w = 12;
+		// number of characters sprites in a column
+		static const short grid_h = 3;
+		// pixel width of the grid, margins included
+		static const short width  = (grid_w*(32 + charsp) - charsp + margin*2);
+		// pixel height of the grid, margins included
+		static const short height = (grid_h*(32 + charsp) - charsp + margin*2);
 
 		friend class Menu;
 	
@@ -120,17 +134,20 @@ class MI_SkinSelectPanel : public UI_Control
 		MI_Image * miImage;
 		gfxSprite * spr;
 		
-		short iAnimationTimer;
-		short iAnimationFrame;
-		short iRandomAnimationFrame;
-		short iColorAnimationCounter;
+		// the following counters cycle on Update() :
+		short iAnimationTimer;        // from [0 to 8[ with step 1
+		short iAnimationFrame;        // from [0 to 2] with step 2
+		short iRandomAnimationFrame;  // from [0 to 128[ with step 32
+		short iColorAnimationCounter; // from [0 to 24[ with step 1
 
-		static const short grid_w = 12;
-		static const short grid_h = 3;
-		gfxSprite **** skinGrid; //skinGrid*[color][skin][pose]
-		short gridIndices[grid_w * grid_h]; // skin indices 
-		short cursors[4]; // grid indices
-		short ready; // whether players have selected a skin
+		gfxSprite **** skinGrid;            // skinGrid* [color][skin][pose]
+		short skinIdGrid[grid_w * grid_h];  // skinlist indices
+
+		// position of each player on the grid (skinIdGrid indices)
+		short cursors[4];
+		
+		// flag: bit at playerId offset is set if player has selected a skin
+		short ready;
 };
 
 class MI_TeamSelectBase : public UI_Control
@@ -206,7 +223,7 @@ class MI_TeamSelect2 : public MI_TeamSelectBase
 		static const short grid_w = 12;
 		static const short grid_h = 3;
 		gfxSprite **** skinGrid; //skinGrid*[color][skin][pose]
-		short gridIndices[grid_w * grid_h]; // skin indices 
+		short skinIdGrid[grid_w * grid_h]; // skin indices 
 		short cursors[4]; // grid indices
 		short teamSelectFlag; // whether players have selected a skin
 
